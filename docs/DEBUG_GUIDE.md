@@ -157,6 +157,6 @@ https://your-vercel-domain.vercel.app/api/health
 
 ## 🔗 相关文档
 
-- `SUPABASE_SETUP.md` - 数据库设置指南
-- `TROUBLESHOOTING_PLAN.md` - 排查计划
-- `ENV_VAR_CHECK.md` - 环境变量检查指南
+- `docs/SUPABASE_SETUP.md` - 数据库设置指南
+- `docs/DEPLOYMENT.md` - 部署指南
+- `docs/LOCAL_ENV_SETUP.md` - 本地开发环境配置
