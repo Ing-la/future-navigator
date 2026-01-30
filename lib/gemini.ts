@@ -23,10 +23,11 @@ export const geminiConfig = {
     flash: 'gemini-1.5-flash', // 快速响应，适合实时对话
     pro: 'gemini-1.5-pro',      // 深度分析，适合报告生成
   },
-};
+} as const;
 
 /**
  * 初始化 Gemini 客户端
+ * @param model 模型类型
  * @param apiKey 可选的 API Key（如果提供，优先使用；否则从环境变量或数据库读取）
  */
 export function getGeminiModel(model: 'flash' | 'pro' = 'flash', apiKey?: string) {
@@ -35,10 +36,22 @@ export function getGeminiModel(model: 'flash' | 'pro' = 'flash', apiKey?: string
     throw new Error('GEMINI_API_KEY 未配置，请在环境变量中配置或通过管理员界面配置');
   }
   
-  // 使用提供的 API Key 初始化
-  return google(geminiConfig.models[model], {
-    apiKey: key,
-  });
+  // 临时设置环境变量（如果提供了 apiKey）
+  // 注意：这仅适用于当前请求，不会影响全局环境变量
+  const originalApiKey = process.env.GEMINI_API_KEY;
+  if (apiKey) {
+    process.env.GEMINI_API_KEY = apiKey;
+  }
+  
+  try {
+    // google() 函数会从环境变量读取 GEMINI_API_KEY
+    return google(geminiConfig.models[model]);
+  } finally {
+    // 恢复原始环境变量
+    if (apiKey && originalApiKey !== undefined) {
+      process.env.GEMINI_API_KEY = originalApiKey;
+    }
+  }
 }
 
 /**
@@ -56,7 +69,7 @@ export async function generateTextResponse(
   const result = await generateText({
     model,
     prompt,
-    systemInstruction: options?.systemInstruction,
+    system: options?.systemInstruction,
   });
 
   return result.text;
