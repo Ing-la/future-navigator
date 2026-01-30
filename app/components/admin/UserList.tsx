@@ -5,9 +5,10 @@ import type { User } from '../../contexts/AuthContext';
 interface UserListProps {
   users: User[];
   onDelete: (userId: string) => void;
+  onResetPassword: (user: User) => void;
 }
 
-export default function UserList({ users, onDelete }: UserListProps) {
+export default function UserList({ users, onDelete, onResetPassword }: UserListProps) {
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'teacher':
@@ -45,17 +46,22 @@ export default function UserList({ users, onDelete }: UserListProps) {
                 </div>
               </div>
             </div>
-            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              角色: {user.role === 'teacher' ? '教师' : user.role === 'parent' ? '家长' : '管理员'}
-            </div>
           </div>
           
-          <button
-            onClick={() => onDelete(user.id)}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
-          >
-            删除
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onResetPassword(user)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+            >
+              修改密码
+            </button>
+            <button
+              onClick={() => onDelete(user.id)}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
+            >
+              删除
+            </button>
+          </div>
         </div>
       ))}
     </div>

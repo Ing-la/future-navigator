@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import UserList from './UserList';
 import ConfigPanel from './ConfigPanel';
+import ResetPasswordModal from './ResetPasswordModal';
 import type { User } from '../../contexts/AuthContext';
 
 export default function AdminDashboard() {
@@ -11,6 +12,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [showConfig, setShowConfig] = useState(false);
+  const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,6 +57,30 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('删除用户失败:', error);
       alert('删除用户失败，请稍后重试');
+    }
+  };
+
+  const handleResetPassword = async (userId: string, newPassword: string) => {
+    try {
+      const response = await fetch('/api/users/password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('密码已成功重置');
+        setResetPasswordUser(null);
+      } else {
+        throw new Error(data.message || data.details || '重置密码失败');
+      }
+    } catch (error: any) {
+      console.error('重置密码失败:', error);
+      throw error;
     }
   };
 
@@ -108,13 +134,26 @@ export default function AdminDashboard() {
               <div className="text-gray-500 dark:text-gray-400">加载中...</div>
             </div>
           ) : (
-            <UserList users={users} onDelete={handleDeleteUser} />
+            <UserList 
+              users={users} 
+              onDelete={handleDeleteUser}
+              onResetPassword={setResetPasswordUser}
+            />
           )}
         </div>
       </main>
 
       {/* 配置面板 */}
       {showConfig && <ConfigPanel onClose={() => setShowConfig(false)} />}
+
+      {/* 重置密码模态框 */}
+      {resetPasswordUser && (
+        <ResetPasswordModal
+          user={resetPasswordUser}
+          onClose={() => setResetPasswordUser(null)}
+          onConfirm={handleResetPassword}
+        />
+      )}
     </div>
   );
 }
