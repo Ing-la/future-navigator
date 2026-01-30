@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getGeminiConfig } from '../../lib/config';
 import MessageList from './MessageList';
 import InputArea from './InputArea';
 
@@ -23,19 +24,91 @@ export default function ChatWindow() {
     };
     setMessages((prev) => [...prev, userMessage]);
 
-    // TODO: 这里后续会调用API
     setIsLoading(true);
     
-    // 模拟AI回复（暂时）
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+    try {
+      // 从配置中获取 API Key（如果配置了）
+      const config = getGeminiConfig();
+      const apiKey = config.configured ? config.apiKey : undefined;
+
+      // 调用 API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage].map(m => ({
+            role: m.role,
+            content: m.content,
+          })),
+          apiKey, // 传递配置的 API Key（如果存在）
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('API 调用失败');
+      }
+
+      // 处理流式响应
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = '';
+      let assistantMessageId = '';
+
+      // 先添加一条空的 assistant 消息
+      assistantMessageId = Date.now().toString();
+      setMessages((prev) => [...prev, {
+        id: assistantMessageId,
         role: 'assistant',
-        content: '这是一个占位回复。API集成后，这里将显示真实的AI回复。',
+        content: '',
+      }]);
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n').filter(line => line.trim());
+
+          for (const line of lines) {
+            if (line.startsWith('0:')) {
+              try {
+                const data = JSON.parse(line.slice(2));
+                if (data.type === 'text-delta' && data.textDelta) {
+                  assistantContent += data.textDelta;
+                  // 更新 assistant 消息
+                  setMessages((prev) => 
+                    prev.map(msg => 
+                      msg.id === assistantMessageId
+                        ? { ...msg, content: assistantContent }
+                        : msg
+                    )
+                  );
+                }
+              } catch (e) {
+                // 忽略解析错误
+              }
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Chat error:', error);
+      const errorMessage = error.message?.includes('GEMINI_API_KEY') 
+        ? 'AI 服务未配置，请联系管理员配置 Gemini API Key'
+        : 'AI 服务暂时不可用，请稍后重试';
+      
+      const errorMsg: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: errorMessage,
       };
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
