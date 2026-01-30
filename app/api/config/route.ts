@@ -1,39 +1,154 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '../../../lib/db';
 
 /**
  * GET /api/config - 获取配置
- * 注意：当前使用 localStorage，服务端无法访问
- * 后续迁移到 Supabase 数据库后，可以从数据库读取
  */
-export async function GET() {
-  // TODO: 从 Supabase 数据库读取配置
-  // 当前返回提示
-  return NextResponse.json({
-    message: '配置获取功能待实现（需要从 Supabase 数据库读取）',
-    // 实际应该返回配置信息
-  });
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const provider = searchParams.get('provider') || 'gemini';
+
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { success: false, message: '数据库未配置' },
+        { status: 500 }
+      );
+    }
+
+    // 从数据库读取配置
+    const { data: config, error } = await supabaseAdmin
+      .from('ai_config')
+      .select('id, provider, api_key_encrypted, is_active')
+      .eq('provider', provider)
+      .eq('is_active', true)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 表示未找到记录
+      console.error('获取配置失败:', error);
+      return NextResponse.json(
+        { success: false, message: '获取配置失败' },
+        { status: 500 }
+      );
+    }
+
+    if (!config) {
+      return NextResponse.json({
+        success: true,
+        config: null,
+        configured: false,
+      });
+    }
+
+    // 解码 API Key（Base64）
+    let apiKey = '';
+    try {
+      apiKey = Buffer.from(config.api_key_encrypted, 'base64').toString('utf-8');
+    } catch (e) {
+      console.error('解码 API Key 失败:', e);
+    }
+
+    return NextResponse.json({
+      success: true,
+      config: {
+        id: config.id,
+        provider: config.provider,
+        apiKey,
+        configured: !!apiKey,
+      },
+      configured: !!apiKey,
+    });
+  } catch (error: any) {
+    console.error('获取配置错误:', error);
+    return NextResponse.json(
+      { success: false, message: '获取配置失败' },
+      { status: 500 }
+    );
+  }
 }
 
 /**
- * POST /api/config - 更新配置
- * 后续迁移到 Supabase 数据库后，保存到数据库
+ * POST /api/config - 保存配置
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { type, config } = body;
+    const { provider = 'gemini', apiKey } = body;
 
-    // TODO: 验证管理员权限
-    // TODO: 保存配置到 Supabase 数据库（加密存储）
-    // 当前使用 localStorage，由前端直接处理
+    if (!apiKey) {
+      return NextResponse.json(
+        { success: false, message: 'API Key 不能为空' },
+        { status: 400 }
+      );
+    }
+
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { success: false, message: '数据库未配置' },
+        { status: 500 }
+      );
+    }
+
+    // 编码 API Key（Base64）
+    const apiKeyEncrypted = Buffer.from(apiKey).toString('base64');
+
+    // 检查配置是否已存在
+    const { data: existingConfig } = await supabaseAdmin
+      .from('ai_config')
+      .select('id')
+      .eq('provider', provider)
+      .single();
+
+    let result;
+    if (existingConfig) {
+      // 更新现有配置
+      const { data, error } = await supabaseAdmin
+        .from('ai_config')
+        .update({
+          api_key_encrypted: apiKeyEncrypted,
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingConfig.id)
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+      result = data;
+    } else {
+      // 创建新配置
+      const { data, error } = await supabaseAdmin
+        .from('ai_config')
+        .insert({
+          provider,
+          api_key_encrypted: apiKeyEncrypted,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+      result = data;
+    }
 
     return NextResponse.json({
       success: true,
-      message: '配置已保存（当前使用 localStorage，部署后将保存到 Supabase 数据库）',
+      message: '配置已保存',
+      config: {
+        id: result.id,
+        provider: result.provider,
+        configured: true,
+      },
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('保存配置错误:', error);
     return NextResponse.json(
-      { success: false, message: '配置保存失败' },
+      { success: false, message: '保存配置失败' },
       { status: 500 }
     );
   }

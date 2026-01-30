@@ -45,17 +45,21 @@ export default function RegisterForm({ selectedRole, onSuccess, onSwitchToLogin 
 
     setIsLoading(true);
     
-    // 模拟API调用延迟
-    setTimeout(() => {
-      const success = register(username, password, selectedRole);
+    try {
+      const success = await register(username, password, selectedRole);
       setIsLoading(false);
       
       if (success) {
         onSuccess();
       } else {
-        setError('用户名已存在');
+        setError('用户名已存在或注册失败');
       }
-    }, 500);
+    } catch (error: any) {
+      setIsLoading(false);
+      const errorMessage = error.message || '注册失败，请稍后重试';
+      setError(errorMessage);
+      console.error('注册错误:', error);
+    }
   };
 
   return (

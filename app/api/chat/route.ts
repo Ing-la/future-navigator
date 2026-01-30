@@ -8,8 +8,8 @@ export async function POST(request: NextRequest) {
 
     // TODO: 验证用户身份（从 token 获取用户信息）
     
-    // 使用配置的 API Key（优先级：请求中的 apiKey > 环境变量）
-    const model = getGeminiModel('flash', apiKey);
+    // 使用配置的 API Key（优先级：请求中的 apiKey > 数据库 > 环境变量）
+    const model = await getGeminiModel('flash', apiKey);
 
     // 调用 Gemini API 生成流式回复
     const result = await streamText({

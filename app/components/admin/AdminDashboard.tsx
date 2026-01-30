@@ -11,25 +11,50 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [showConfig, setShowConfig] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 从 localStorage 加载用户列表
-    const allUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    // 过滤掉管理员，只显示教师和家长
-    const filteredUsers = allUsers.filter((u: User) => u.role !== 'admin');
-    setUsers(filteredUsers);
-    setTotalUsers(filteredUsers.length);
+    loadUsers();
   }, []);
 
-  const handleDeleteUser = (userId: string) => {
-    if (confirm('确定要删除该用户吗？')) {
-      const allUsers = JSON.parse(localStorage.getItem('users') || '[]');
-      const updatedUsers = allUsers.filter((u: User) => u.id !== userId);
-      localStorage.setItem('users', JSON.stringify(updatedUsers));
-      
-      const filteredUsers = updatedUsers.filter((u: User) => u.role !== 'admin');
-      setUsers(filteredUsers);
-      setTotalUsers(filteredUsers.length);
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/users');
+      const data = await response.json();
+
+      if (data.success) {
+        setUsers(data.users || []);
+        setTotalUsers(data.total || 0);
+      }
+    } catch (error) {
+      console.error('加载用户列表失败:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('确定要删除该用户吗？')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/users?id=${userId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // 重新加载用户列表
+        await loadUsers();
+      } else {
+        alert('删除用户失败：' + (data.message || '未知错误'));
+      }
+    } catch (error) {
+      console.error('删除用户失败:', error);
+      alert('删除用户失败，请稍后重试');
     }
   };
 
@@ -44,7 +69,9 @@ export default function AdminDashboard() {
         <div className="flex-1 p-4 space-y-3">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
             <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">用户总数</div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{totalUsers}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {loading ? '...' : totalUsers}
+            </div>
           </div>
           
           <button
@@ -76,7 +103,13 @@ export default function AdminDashboard() {
         </header>
         
         <div className="flex-1 overflow-y-auto p-6">
-          <UserList users={users} onDelete={handleDeleteUser} />
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-gray-500 dark:text-gray-400">加载中...</div>
+            </div>
+          ) : (
+            <UserList users={users} onDelete={handleDeleteUser} />
+          )}
         </div>
       </main>
 

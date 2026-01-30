@@ -1,18 +1,6 @@
 import { google } from '@ai-sdk/google';
 import { generateText, streamText } from 'ai';
-
-/**
- * Gemini 模型配置
- * 优先级：数据库配置 > 环境变量
- */
-export function getGeminiApiKey(): string {
-  // TODO: 从 Supabase 数据库读取配置（优先级最高）
-  // const dbConfig = await getConfigFromDatabase();
-  // if (dbConfig?.gemini?.apiKey) return dbConfig.gemini.apiKey;
-  
-  // 使用环境变量（部署时使用）
-  return process.env.GEMINI_API_KEY || '';
-}
+import { getGeminiConfigServer } from './config';
 
 /**
  * Gemini 模型配置
@@ -26,12 +14,27 @@ export const geminiConfig = {
 } as const;
 
 /**
+ * 获取 Gemini API Key
+ * 优先级：数据库配置 > 环境变量
+ */
+export async function getGeminiApiKey(): Promise<string> {
+  // 从数据库或环境变量读取配置
+  const config = await getGeminiConfigServer();
+  return config.apiKey || '';
+}
+
+/**
  * 初始化 Gemini 客户端
  * @param model 模型类型
  * @param apiKey 可选的 API Key（如果提供，优先使用；否则从环境变量或数据库读取）
  */
-export function getGeminiModel(model: 'flash' | 'pro' = 'flash', apiKey?: string) {
-  const key = apiKey || getGeminiApiKey();
+export async function getGeminiModel(model: 'flash' | 'pro' = 'flash', apiKey?: string) {
+  let key = apiKey;
+  
+  if (!key) {
+    key = await getGeminiApiKey();
+  }
+  
   if (!key) {
     throw new Error('GEMINI_API_KEY 未配置，请在环境变量中配置或通过管理员界面配置');
   }
@@ -64,7 +67,7 @@ export async function generateTextResponse(
     systemInstruction?: string;
   }
 ) {
-  const model = getGeminiModel(options?.model || 'flash');
+  const model = await getGeminiModel(options?.model || 'flash');
   
   const result = await generateText({
     model,
@@ -85,7 +88,7 @@ export async function generateStreamResponse(
     systemInstruction?: string;
   }
 ) {
-  const model = getGeminiModel(options?.model || 'flash');
+  const model = await getGeminiModel(options?.model || 'flash');
   
   return streamText({
     model,
@@ -104,7 +107,7 @@ export async function analyzeMultimodal(
     model?: 'flash' | 'pro';
   }
 ) {
-  const model = getGeminiModel(options?.model || 'pro');
+  const model = await getGeminiModel(options?.model || 'pro');
   
   // TODO: 实现多模态分析逻辑
   // 需要将文件 URL 转换为 Gemini 可接受的格式

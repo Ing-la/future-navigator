@@ -46,7 +46,7 @@ export default function UserList({ users, onDelete }: UserListProps) {
               </div>
             </div>
             <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              密码: {user.password}
+              角色: {user.role === 'teacher' ? '教师' : user.role === 'parent' ? '家长' : '管理员'}
             </div>
           </div>
           

@@ -12,8 +12,11 @@
   "dependencies": {
     "@ai-sdk/google": "^3.0.16",
     "@ai-sdk/openai": "^3.0.21",
+    "@supabase/supabase-js": "^2.93.3",
+    "@types/bcryptjs": "^2.4.6",
     "@vercel/blob": "^2.0.1",
     "ai": "^6.0.59",
+    "bcryptjs": "^3.0.3",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"

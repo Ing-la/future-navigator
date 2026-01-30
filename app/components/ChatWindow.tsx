@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { getGeminiConfig } from '../../lib/config';
 import MessageList from './MessageList';
 import InputArea from './InputArea';
 
@@ -28,8 +27,9 @@ export default function ChatWindow() {
     
     try {
       // 从配置中获取 API Key（如果配置了）
-      const config = getGeminiConfig();
-      const apiKey = config.configured ? config.apiKey : undefined;
+      // 注意：客户端无法直接访问数据库，需要通过 API 获取
+      // 这里暂时不传递 apiKey，让服务端从数据库读取
+      const apiKey = undefined;
 
       // 调用 API
       const response = await fetch('/api/chat', {

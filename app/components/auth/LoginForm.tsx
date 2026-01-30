@@ -34,9 +34,8 @@ export default function LoginForm({ selectedRole, onSuccess, onSwitchToRegister 
 
     setIsLoading(true);
     
-    // 模拟API调用延迟
-    setTimeout(() => {
-      const success = login(username, password, selectedRole);
+    try {
+      const success = await login(username, password, selectedRole);
       setIsLoading(false);
       
       if (success) {
@@ -44,7 +43,12 @@ export default function LoginForm({ selectedRole, onSuccess, onSwitchToRegister 
       } else {
         setError('账号或密码错误');
       }
-    }, 500);
+    } catch (error: any) {
+      setIsLoading(false);
+      const errorMessage = error.message || '登录失败，请稍后重试';
+      setError(errorMessage);
+      console.error('登录错误:', error);
+    }
   };
 
   return (
