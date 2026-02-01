@@ -49,7 +49,7 @@ export default function CollapsibleCard({
 
       {/* 内容区域（可折叠） */}
       {isExpanded && (
-        <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+        <div className="px-4 pb-4 pt-4">
           {children}
         </div>
       )}

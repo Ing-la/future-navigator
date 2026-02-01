@@ -51,7 +51,7 @@ export default function TeacherSidebar({
       >
         <div className="flex flex-col h-full">
           {/* 顶部标题区域 */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between p-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               导航
             </h2>
@@ -77,7 +77,7 @@ export default function TeacherSidebar({
           </div>
 
           {/* 班级概况按钮 */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="p-4">
             <button
               onClick={() => handleNavClick(onSelectOverview)}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${

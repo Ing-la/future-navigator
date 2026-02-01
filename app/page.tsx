@@ -110,7 +110,7 @@ export default function Home() {
         }`}
       >
         {/* 顶部栏 */}
-        <header className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-gray-800">
+        <header className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#1a1a1a]">
           <div className="flex items-center gap-3">
             {/* 移动端功能按钮 */}
             <button

@@ -175,7 +175,7 @@ export default function LoginModal({ isOpen, onClose, initialMode }: LoginModalP
           ) : step === 'login' ? (
             <div>
               {selectedRole && (
-                <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="mb-4 pb-4">
                   <button
                     onClick={handleBack}
                     className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"

@@ -43,7 +43,7 @@ export default function Sidebar({ isOpen, onToggle, onLoginClick, onRegisterClic
         >
           <div className="flex flex-col h-full">
             {/* 顶部标题区域 */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between p-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 欢迎使用
               </h2>
@@ -69,7 +69,7 @@ export default function Sidebar({ isOpen, onToggle, onLoginClick, onRegisterClic
             </div>
 
             {/* 登录/注册入口 */}
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="p-4">
               <div className="space-y-3">
                 <button
                   onClick={onLoginClick}
